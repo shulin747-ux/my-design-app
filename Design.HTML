@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamSpace AI - 智能室内设计</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 20px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // --- 内置图标组件库 (解决外部库加载报错问题) ---
+        const createIcon = (pathData) => (props) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={props.size || 24} 
+                height={props.size || 24} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={props.className}
+                {...props}
+            >
+                {pathData}
+            </svg>
+        );
+
+        const Icons = {
+            Wand2: createIcon(<><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></>),
+            Home: createIcon(<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>),
+            Ruler: createIcon(<><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></>),
+            Hammer: createIcon(<><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25V7.86c0-.55.22-1.08.6-1.48l2.49-2.54a1 1 0 0 0-1.44-1.38l-2.54 2.49c-.4.38-.93.6-1.48.6H15.8c-.85 0-1.65.33-2.25.93l-1.25 1.25a3 3 0 0 0 0 4.24l1.37 1.37a3 3 0 0 0 4.24 0Z"/></>),
+            Palette: createIcon(<><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></>),
+            LayoutTemplate: createIcon(<><rect width="18" height="7" x="3" y="3" rx="1"/><rect width="9" height="7" x="3" y="14" rx="1"/><rect width="5" height="7" x="16" y="14" rx="1"/></>),
+            Download: createIcon(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></>),
+            History: createIcon(<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></>),
+            Trash2: createIcon(<><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>),
+            BoxSelect: createIcon(<><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h1"/><path d="M14 3h1"/><path d="M14 21h1"/><path d="M3 9v1"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M21 14v1"/></>),
+            Settings: createIcon(<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>),
+            Key: createIcon(<><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></>),
+            Loader2: (props) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+            )
+        };
+
+        // 解构所需的图标
+        const { 
+            LayoutTemplate, Palette, Wand2, Download, 
+            History, Trash2, Loader2, Ruler, 
+            Home, BoxSelect, Hammer, Key, Settings
+        } = Icons;
+
+        const DreamSpaceApp = () => {
+            // State configuration
+            const [config, setConfig] = useState({
+                roomType: '客厅',
+                style: '现代简约',
+                colorTheme: '暖色调',
+                width: 5,
+                length: 6,
+                height: 2.8,
+                windowType: '落地窗',
+                ceilingType: '平顶',
+                flooringMaterial: '木地板',
+                description: ''
+            });
+
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [currentImage, setCurrentImage] = useState(null);
+            const [history, setHistory] = useState([]);
+            const [error, setError] = useState('');
+            
+            // API Key Management - 默认使用您提供的 Key
+            const [apiKey, setApiKey] = useState('AIzaSyCKvAOQP3WVViNVQ1v55eq5kT7KXeZksBw');
+            const [showKeyModal, setShowKeyModal] = useState(false);
+
+            // Load API Key from local storage on mount
+            useEffect(() => {
+                const storedKey = localStorage.getItem('dreamspace_api_key');
+                if (storedKey) {
+                    setApiKey(storedKey);
+                } else {
+                    // 如果本地没有存 Key，但 state 里有预设的 Key，就不显示弹窗了
+                    if (!apiKey) {
+                        setShowKeyModal(true);
+                    }
+                }
+            }, []);
+
+            const saveApiKey = (key) => {
+                setApiKey(key);
+                localStorage.setItem('dreamspace_api_key', key);
+                setShowKeyModal(false);
+            };
+
+            // Options Arrays
+            const roomTypes = ['客厅', '卧室', '厨房', '浴室', '书房', '餐厅', '阳台', '儿童房'];
+            const styles = ['现代简约', '北欧风', '日式原木', '轻奢风', '美式田园', '工业风', '新中式', '赛博朋克'];
+            const colors = ['暖色调', '冷色调', '中性灰', '黑白', '大地色', '莫兰迪色', '多彩撞色'];
+            const windowTypes = ['落地窗', '飘窗', '常规窗', '百叶窗', '天窗', '无窗'];
+            const ceilingTypes = ['平顶', '回字形吊顶', '石膏线', '工业风裸顶', '木质吊顶'];
+            const flooringMaterials = ['木地板', '大理石瓷砖', '水磨石', '地毯', '水泥自流平'];
+
+            // Generate Design
+            const generateDesign = async () => {
+                // 如果 apiKey 依然为空（极少情况），则弹窗
+                if (!apiKey) {
+                    setShowKeyModal(true);
+                    return;
+                }
+                if (isGenerating) return;
+                
+                setIsGenerating(true);
+                setError('');
+
+                try {
+                    const sizeDesc = `空间尺寸: 宽${config.width}米 x 长${config.length}米，层高${config.height}米`;
+                    const structureDesc = `硬装结构: 窗户为${config.windowType}，顶部采用${config.ceilingType}设计，地面铺设${config.flooringMaterial}`;
+                    
+                    const prompt = `专业室内设计渲染图，照片级真实感，8k分辨率，高质量。
+                    房间类型: ${config.roomType}。
+                    设计风格: ${config.style}。
+                    色调: ${config.colorTheme}。
+                    ${sizeDesc}。
+                    ${structureDesc}。
+                    具体描述: ${config.description || '布局合理，采光良好，高品质家具，软装搭配和谐'}。
+                    视角: 透视视角，展示整体空间感与硬装细节。`;
+
+                    const response = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                instances: [{ prompt: prompt }],
+                                parameters: { sampleCount: 1 }
+                            }),
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        if (response.status === 400 || response.status === 403) {
+                             throw new Error('API Key 无效或无权限，请检查设置。');
+                        }
+                        throw new Error('生成失败，请稍后重试');
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.predictions && result.predictions[0]) {
+                        const base64Image = result.predictions[0].bytesBase64Encoded;
+                        const imageUrl = `data:image/png;base64,${base64Image}`;
+                        
+                        const newEntry = {
+                            id: Date.now(),
+                            image: imageUrl,
+                            config: { ...config },
+                            date: new Date().toLocaleString()
+                        };
+
+                        setCurrentImage(newEntry);
+                        setHistory(prev => [newEntry, ...prev]);
+                    } else {
+                        throw new Error('未能生成图片数据');
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    setError(err.message || '设计生成遇到问题，请检查网络或稍后重试。');
+                    if (err.message.includes('API Key')) {
+                        setShowKeyModal(true);
+                    }
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+
+            const handleConfigChange = (key, value) => {
+                setConfig(prev => ({ ...prev, [key]: value }));
+            };
+
+            const getPreviewStyle = () => {
+                const max = Math.max(config.width, config.length);
+                const wPercent = (config.width / max) * 100;
+                const lPercent = (config.length / max) * 100;
+                return { width: `${wPercent}%`, height: `${lPercent}%` };
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 text-slate-800 selection:bg-indigo-100 relative">
+                    
+                    {/* API Key Modal */}
+                    {showKeyModal && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+                                <div className="flex items-center gap-3 mb-4 text-indigo-600">
+                                    <Key size={24} />
+                                    <h2 className="text-xl font-bold">配置 API Key</h2>
+                                </div>
+                                <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                                    要使用生成功能，您需要提供 Google Gemini API Key。<br/>
+                                    <span className="text-xs text-gray-400">您的 Key 仅会保存在本地浏览器中，不会发送给第三方。</span>
+                                </p>
+                                <input 
+                                    type="password" 
+                                    placeholder="在此粘贴您的 API Key"
+                                    className="w-full border border-gray-300 rounded-lg p-3 mb-4 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                />
+                                <div className="flex justify-end gap-2">
+                                    {apiKey && (
+                                        <button 
+                                            onClick={() => setShowKeyModal(false)}
+                                            className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg text-sm"
+                                        >
+                                            取消
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={() => saveApiKey(apiKey)}
+                                        disabled={!apiKey}
+                                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        保存并继续
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Header */}
+                    <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-indigo-600 p-2 rounded-lg text-white">
+                                    <Wand2 size={24} />
+                                </div>
+                                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                                    DreamSpace AI
+                                </h1>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={() => setShowKeyModal(true)}
+                                    className="text-gray-500 hover:text-indigo-600 transition-colors flex items-center gap-1 text-sm"
+                                >
+                                    <Settings size={16} />
+                                    <span>设置 Key</span>
+                                </button>
+                                <div className="text-sm text-gray-500 hidden sm:flex items-center gap-2">
+                                    <BoxSelect size={16} />
+                                    <span>全屋智能设计引擎</span>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* LEFT PANEL */}
+                            <div className="lg:col-span-4 space-y-6 h-full overflow-y-auto pr-1 custom-scrollbar">
+                                {/* 1. Dimensions */}
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 overflow-hidden relative">
+                                    <div className="flex items-center gap-2 mb-4 text-indigo-900 font-bold text-lg">
+                                        <Ruler size={20} />
+                                        <h2>空间尺寸</h2>
+                                    </div>
+                                    <div className="bg-slate-100 rounded-xl p-6 h-40 flex items-center justify-center mb-5 relative border border-slate-200 border-dashed">
+                                        <div className="bg-white border-2 border-indigo-500 shadow-md relative transition-all duration-300 flex items-center justify-center" style={getPreviewStyle()}>
+                                            <div className="text-xs font-bold text-indigo-600 whitespace-nowrap bg-white/80 px-1 rounded">{config.width}m x {config.length}m</div>
+                                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                                        </div>
+                                        <span className="absolute bottom-2 right-2 text-[10px] text-gray-400">H: {config.height}m</span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="flex justify-between text-xs mb-1 text-gray-500"><label>宽度 (m)</label><span className="font-medium text-indigo-600">{config.width}</span></div>
+                                                <input type="range" min="2" max="12" step="0.1" value={config.width} onChange={(e) => handleConfigChange('width', Number(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-xs mb-1 text-gray-500"><label>长度 (m)</label><span className="font-medium text-indigo-600">{config.length}</span></div>
+                                                <input type="range" min="2" max="12" step="0.1" value={config.length} onChange={(e) => handleConfigChange('length', Number(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between text-xs mb-1 text-gray-500"><label>层高 (m)</label><span className="font-medium text-indigo-600">{config.height}</span></div>
+                                            <input type="range" min="2.2" max="5" step="0.1" value={config.height} onChange={(e) => handleConfigChange('height', Number(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 2. Structure */}
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                                    <div className="flex items-center gap-2 mb-4 text-indigo-900 font-bold text-lg">
+                                        <Hammer size={20} />
+                                        <h2>硬装结构</h2>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {[
+                                            { label: '窗户结构', key: 'windowType', options: windowTypes },
+                                            { label: '顶部设计', key: 'ceilingType', options: ceilingTypes },
+                                            { label: '地面材质', key: 'flooringMaterial', options: flooringMaterials }
+                                        ].map(group => (
+                                            <div key={group.key}>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1.5">{group.label}</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {group.options.map(t => (
+                                                        <button key={t} onClick={() => handleConfigChange(group.key, t)} className={`text-xs px-2.5 py-1.5 rounded-md border transition-all ${config[group.key] === t ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>{t}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 3. Style */}
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                                    <div className="flex items-center gap-2 mb-4 text-indigo-900 font-bold text-lg">
+                                        <Palette size={20} />
+                                        <h2>软装风格</h2>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">房间类型</label>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {roomTypes.map(type => (
+                                                    <button key={type} onClick={() => handleConfigChange('roomType', type)} className={`text-xs py-1.5 rounded-md transition-all ${config.roomType === type ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>{type}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">设计风格</label>
+                                            <select value={config.style} onChange={(e) => handleConfigChange('style', e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                                {styles.map(style => <option key={style} value={style}>{style}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">整体色调</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {colors.map(color => (
+                                                    <button key={color} onClick={() => handleConfigChange('colorTheme', color)} className={`text-xs px-2.5 py-1.5 rounded-full border transition-all ${config.colorTheme === color ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{color}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">个性化描述</label>
+                                            <textarea className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none bg-gray-50 focus:bg-white transition-colors" rows="2" placeholder="如：放一张黄色皮沙发，墙上挂几幅抽象画..." value={config.description} onChange={(e) => handleConfigChange('description', e.target.value)} />
+                                        </div>
+                                        <button onClick={generateDesign} disabled={isGenerating} className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] mt-2 ${isGenerating ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-indigo-500/30 hover:brightness-105'}`}>
+                                            {isGenerating ? <><Loader2 size={18} className="animate-spin" />正在建模与渲染...</> : <><Wand2 size={18} />生成装修方案</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT PANEL */}
+                            <div className="lg:col-span-8 space-y-6">
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px] flex flex-col relative">
+                                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 backdrop-blur-sm absolute top-0 left-0 right-0 z-10">
+                                        <h3 className="font-semibold text-gray-700 flex items-center gap-2 text-sm">
+                                            <Home size={16} className="text-indigo-500"/>
+                                            {currentImage ? `${config.style} · ${config.roomType}设计` : '设计预览区域'}
+                                        </h3>
+                                        {currentImage && (
+                                            <button onClick={() => { const link = document.createElement('a'); link.href = currentImage.image; link.download = `dreamspace-${Date.now()}.png`; link.click(); }} className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
+                                                <Download size={12} /> 保存图片
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 bg-slate-100 relative flex items-center justify-center p-0 overflow-hidden">
+                                        {isGenerating ? (
+                                            <div className="flex flex-col items-center justify-center p-8 w-full h-full bg-white/80 backdrop-blur-sm z-20">
+                                                <div className="relative w-20 h-20 mb-6">
+                                                    <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                                                    <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    <Wand2 size={32} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500 animate-pulse" />
+                                                </div>
+                                                <div className="text-indigo-900 font-semibold text-lg mb-2">AI 正在构建您的空间...</div>
+                                                <div className="space-y-1 text-center">
+                                                    <p className="text-sm text-gray-500">应用结构: {config.ceilingType} + {config.windowType}</p>
+                                                    <p className="text-sm text-gray-500">渲染材质: {config.flooringMaterial} / {config.style}</p>
+                                                </div>
+                                            </div>
+                                        ) : currentImage ? (
+                                            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                                                <img src={currentImage.image} alt="Generated Design" className="max-w-full max-h-full object-contain shadow-2xl animate-fade-in" />
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-gray-400 space-y-6 p-8">
+                                                <div className="relative inline-block">
+                                                    <div className="absolute inset-0 bg-indigo-100 rounded-full scale-150 opacity-50 blur-xl"></div>
+                                                    <div className="bg-white p-8 rounded-3xl shadow-lg relative z-10">
+                                                        <LayoutTemplate size={64} className="text-indigo-500" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xl font-bold text-gray-700 mb-2">定义空间，预见未来</p>
+                                                    <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">请在左侧输入您的房间尺寸、硬装结构（窗户/地面/吊顶）<br/>以及喜欢的风格，AI 将为您生成专属装修方案。</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {error && (
+                                            <div className="absolute inset-0 bg-white/95 flex items-center justify-center z-30 p-8 text-center backdrop-blur-sm">
+                                                <div className="max-w-sm">
+                                                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={24} className="text-red-500" /></div>
+                                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">生成遇到问题</h3>
+                                                    <p className="text-gray-600 mb-6 text-sm">{error}</p>
+                                                    <button onClick={() => { setError(''); setShowKeyModal(true); }} className="px-6 py-2.5 bg-gray-900 text-white rounded-lg text-sm hover:bg-gray-800 transition-colors">重新配置 API Key</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {history.length > 0 && (
+                                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2 text-indigo-900 font-bold"><History size={18} /><h2>设计历史</h2></div>
+                                            <button onClick={() => setHistory([])} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"><Trash2 size={12} /> 清空历史</button>
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                            {history.map((item) => (
+                                                <div key={item.id} onClick={() => setCurrentImage(item)} className={`group relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-gray-100 ${currentImage?.id === item.id ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}>
+                                                    <img src={item.image} alt="History" className="w-full h-full object-cover transform group-hover:scale-110 transition-duration-700 transition-transform" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                                                        <p className="text-white text-[10px] font-bold truncate">{item.config.style}</p>
+                                                        <p className="text-gray-200 text-[10px] truncate">{item.config.width}x{item.config.length}m</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DreamSpaceApp />);
+    </script>
+</body>
+</html>
