@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>机场贵宾厅权益平台 - 交互原型</title>
+  <style>
+    :root {
+      --red: #c61f2b;
+      --red-dark: #941722;
+      --ink: #17202a;
+      --muted: #687180;
+      --line: #dfe3e8;
+      --soft: #f5f7fa;
+      --green: #16845b;
+      --amber: #b56a00;
+      --blue: #2766b1;
+      --shadow: 0 18px 50px rgba(22, 31, 45, .14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef1f5;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; }
+    .topbar {
+      height: 68px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      background: linear-gradient(110deg, #9f1823 0%, #c61f2b 55%, #db424d 100%);
+      box-shadow: 0 3px 18px rgba(112, 15, 23, .28);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark {
+      width: 38px; height: 38px; border: 2px solid white; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 800; letter-spacing: -2px;
+    }
+    .brand h1 { margin: 0; font-size: 19px; }
+    .brand small { display: block; margin-top: 3px; opacity: .8; }
+    .top-meta { font-size: 13px; opacity: .88; }
+    .workspace {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: calc(100vh - 68px);
+    }
+    .sidebar {
+      padding: 24px 16px;
+      background: #fff;
+      border-right: 1px solid var(--line);
+    }
+    .side-label {
+      margin: 4px 12px 10px;
+      color: #8a929e;
+      font-size: 12px;
+      letter-spacing: .08em;
+    }
+    .nav-btn {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 7px;
+      border: 0;
+      border-radius: 10px;
+      color: #414957;
+      background: transparent;
+      text-align: left;
+      transition: .2s ease;
+    }
+    .nav-btn:hover { background: #f6f7f9; }
+    .nav-btn.active { color: var(--red); background: #fff0f1; font-weight: 700; }
+    .side-note {
+      margin: 24px 8px 0;
+      padding: 14px;
+      border: 1px solid #f2d7da;
+      border-radius: 12px;
+      color: #6d3b40;
+      background: #fff8f8;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    main { padding: 28px; overflow: auto; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .page-heading {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 22px;
+    }
+    .page-heading h2 { margin: 0 0 7px; font-size: 26px; }
+    .page-heading p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px;
+      background: #edf7f3; color: var(--green); font-size: 12px; font-weight: 700;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 8px 24px rgba(30, 40, 55, .06);
+    }
+    .overview-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; }
+    .hero-card { padding: 26px; }
+    .hero-card h3 { margin: 0 0 16px; font-size: 20px; }
+    .hero-card p { color: var(--muted); line-height: 1.8; }
+    .principles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 22px; }
+    .principle { padding: 16px; border: 1px solid #e4e8ed; border-radius: 12px; background: #fbfcfd; }
+    .principle b { display: block; margin-bottom: 6px; color: #29313c; }
+    .principle span { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .decision-card { padding: 22px; }
+    .decision-card h3 { margin: 0 0 15px; }
+    .decision-row { padding: 13px 0; border-bottom: 1px solid #edf0f3; }
+    .decision-row:last-child { border-bottom: 0; }
+    .decision-row label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 7px; }
+    .decision-row select, .decision-row input {
+      width: 100%; border: 1px solid #ccd2d9; border-radius: 8px; padding: 9px 10px; background: white;
+    }
+    .callout {
+      margin-top: 18px; padding: 14px 16px; border-left: 4px solid var(--amber);
+      background: #fff8ec; color: #705021; border-radius: 8px; font-size: 13px; line-height: 1.65;
+    }
+    .flow-wrap { overflow-x: auto; padding-bottom: 8px; }
+    .flow-board {
+      min-width: 1120px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: white;
+    }
+    .lane {
+      display: grid;
+      grid-template-columns: 145px repeat(7, minmax(130px, 1fr));
+      min-height: 116px;
+      border-bottom: 1px solid var(--line);
+    }
+    .lane:last-child { border-bottom: 0; }
+    .lane-title {
+      padding: 18px 14px; font-weight: 800; display: flex; align-items: center;
+      border-right: 1px solid var(--line);
+    }
+    .bank .lane-title { color: #8f1a24; background: #fff1f2; }
+    .customer .lane-title { color: #174f8e; background: #eef6ff; }
+    .lounge .lane-title { color: #126349; background: #edf9f4; }
+    .finance .lane-title { color: #805400; background: #fff7e7; }
+    .flow-cell {
+      position: relative; padding: 13px 10px; border-right: 1px dashed #e5e8ec;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .flow-cell:last-child { border-right: 0; }
+    .node {
+      width: 100%; padding: 11px; border: 1px solid #ccd3da; border-radius: 10px;
+      background: white; text-align: center; font-size: 12px; line-height: 1.45;
+      box-shadow: 0 4px 12px rgba(26, 34, 45, .05);
+    }
+    .node strong { display: block; margin-bottom: 3px; font-size: 13px; }
+    .node.config { border-color: #dca2a7; background: #fff8f8; }
+    .node.system { border-color: #9dbfe5; background: #f6faff; }
+    .node.success { border-color: #90cdb8; background: #f3fbf8; }
+    .node.warn { border-color: #dfbe78; background: #fffbf2; }
+    .arrow::after {
+      content: "›"; position: absolute; right: -7px; top: 45%; z-index: 2;
+      width: 16px; height: 16px; border-radius: 50%; background: #6e7784; color: white;
+      display: grid; place-items: center; font-weight: 800;
+    }
+    .legend { display: flex; gap: 14px; margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+    .legend i { width: 11px; height: 11px; display: inline-block; border-radius: 3px; margin-right: 5px; }
+    .phone-layout { display: grid; grid-template-columns: 390px 1fr; gap: 26px; align-items: start; }
+    .phone {
+      width: 375px; min-height: 760px; position: relative; overflow: hidden;
+      border: 9px solid #17191d; border-radius: 38px; background: #f4f5f7; box-shadow: var(--shadow);
+    }
+    .phone::before {
+      content: ""; position: absolute; z-index: 20; top: 0; left: 50%; transform: translateX(-50%);
+      width: 142px; height: 23px; border-radius: 0 0 16px 16px; background: #17191d;
+    }
+    .statusbar {
+      height: 34px; padding: 10px 20px 0; display: flex; justify-content: space-between;
+      font-size: 11px; color: #fff; background: var(--red);
+    }
+    .mobile-head {
+      padding: 14px 18px 18px; color: white; background: var(--red);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .mobile-head b { font-size: 18px; }
+    .mobile-content { padding: 16px 14px 82px; }
+    .summary-card {
+      padding: 18px; border-radius: 18px; color: white;
+      background: linear-gradient(135deg, #30353c, #111317);
+      box-shadow: 0 10px 22px rgba(15, 18, 22, .24);
+    }
+    .summary-top { display: flex; justify-content: space-between; align-items: center; }
+    .summary-card h3 { margin: 10px 0 4px; font-size: 24px; }
+    .summary-card p { margin: 0; opacity: .72; font-size: 12px; }
+    .counter { display: flex; gap: 18px; margin-top: 18px; }
+    .counter div { flex: 1; }
+    .counter b { display: block; font-size: 20px; }
+    .counter span { font-size: 11px; opacity: .7; }
+    .mobile-section-title { margin: 18px 2px 10px; font-size: 15px; font-weight: 800; }
+    .benefit-card {
+      padding: 15px; margin-bottom: 11px; border: 1px solid #e1e5e9; border-radius: 14px; background: white;
+    }
+    .benefit-row { display: flex; justify-content: space-between; gap: 10px; }
+    .benefit-card h4 { margin: 0 0 5px; font-size: 14px; }
+    .benefit-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .count-badge {
+      min-width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+      color: var(--red); background: #fff0f1; font-size: 20px; font-weight: 800;
+    }
+    .progress { height: 6px; margin-top: 12px; border-radius: 99px; background: #eceff2; overflow: hidden; }
+    .progress i { display: block; width: 67%; height: 100%; background: var(--red); }
+    .mobile-tabs {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 68px;
+      display: flex; align-items: center; justify-content: space-around;
+      border-top: 1px solid #ddd; background: rgba(255,255,255,.98);
+    }
+    .mobile-tabs button { border: 0; background: none; color: #7b838e; font-size: 11px; }
+    .mobile-tabs button.active { color: var(--red); font-weight: 800; }
+    .prototype-controls { padding: 22px; }
+    .prototype-controls h3 { margin: 0 0 14px; }
+    .screen-list { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 10px; }
+    .screen-btn {
+      padding: 12px; border: 1px solid #d4d9df; border-radius: 10px; background: white; text-align: left;
+    }
+    .screen-btn.active { border-color: var(--red); color: var(--red); background: #fff7f8; font-weight: 700; }
+    .annotation { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .annotation h4 { margin: 0 0 10px; }
+    .annotation ul { padding-left: 20px; color: var(--muted); line-height: 1.8; font-size: 13px; }
+    .detail-header { text-align: center; padding: 6px 0 15px; }
+    .detail-header .big-count { font-size: 44px; font-weight: 800; color: var(--red); }
+    .detail-header p { margin: 4px 0; color: var(--muted); font-size: 12px; }
+    .detail-box { margin-bottom: 12px; padding: 15px; border-radius: 14px; background: white; border: 1px solid #e2e5e9; }
+    .kv { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f1f3; font-size: 12px; }
+    .kv:last-child { border-bottom: 0; }
+    .kv span { color: var(--muted); }
+    .primary-btn {
+      width: 100%; padding: 14px; border: 0; border-radius: 12px;
+      color: white; background: var(--red); font-weight: 800;
+    }
+    .qr-box { padding: 22px; border-radius: 18px; background: white; text-align: center; }
+    .qr {
+      width: 210px; height: 210px; margin: 12px auto 16px; padding: 14px; border: 7px solid #111; background:
+        repeating-linear-gradient(0deg, #111 0 7px, #fff 7px 14px),
+        repeating-linear-gradient(90deg, transparent 0 7px, #111 7px 14px);
+      background-blend-mode: multiply;
+    }
+    .timer { color: var(--red); font-weight: 800; }
+    .success-icon {
+      width: 78px; height: 78px; margin: 30px auto 16px; border-radius: 50%;
+      display: grid; place-items: center; color: white; background: var(--green); font-size: 40px;
+    }
+    .history-item { padding: 13px 0; border-bottom: 1px solid #eceff2; display: flex; justify-content: space-between; gap: 10px; }
+    .history-item b { font-size: 13px; }
+    .history-item small { color: var(--muted); }
+    .positive { color: var(--green); }
+    .negative { color: #9a3a42; }
+    .portal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .portal-card { padding: 20px; }
+    .portal-card h3 { margin: 0 0 14px; }
+    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .metric { padding: 17px; border-radius: 12px; background: white; border: 1px solid var(--line); }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .metric b { display: block; margin-top: 7px; font-size: 23px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; }
+    .field input, .field select {
+      width: 100%; padding: 10px; border: 1px solid #ccd2d9; border-radius: 8px; background: white;
+    }
+    .table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .table th { padding: 10px; text-align: left; color: var(--muted); background: #f6f7f9; }
+    .table td { padding: 11px 10px; border-bottom: 1px solid #eceff2; }
+    .status { padding: 4px 7px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .status.ok { color: var(--green); background: #e9f7f1; }
+    .status.pending { color: var(--amber); background: #fff5df; }
+    .status.bad { color: #9a3a42; background: #fff0f1; }
+    .verify-layout { display: grid; grid-template-columns: 440px 1fr; gap: 20px; }
+    .scanner { padding: 24px; background: #17202a; color: white; min-height: 620px; }
+    .scan-window {
+      height: 310px; margin: 30px 0 22px; border: 2px solid rgba(255,255,255,.8); border-radius: 18px;
+      position: relative; display: grid; place-items: center; color: rgba(255,255,255,.65);
+    }
+    .scan-line { position: absolute; left: 28px; right: 28px; top: 50%; height: 2px; background: #ff525d; box-shadow: 0 0 12px #ff525d; }
+    .scan-actions { display: flex; gap: 10px; }
+    .scan-actions button { flex: 1; padding: 12px; border-radius: 9px; border: 1px solid #596675; background: #263341; color: white; }
+    .verification { padding: 22px; }
+    .customer-id { display: flex; gap: 14px; padding: 16px; border-radius: 13px; background: #f6f8fa; }
+    .avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: #d9dee5; font-weight: 800; }
+    @media (max-width: 1000px) {
+      .workspace { grid-template-columns: 1fr; }
+      .sidebar { display: flex; overflow-x: auto; padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .side-label, .side-note { display: none; }
+      .nav-btn { min-width: 135px; margin: 0 5px 0 0; text-align: center; }
+      .overview-grid, .phone-layout, .portal-grid, .verify-layout { grid-template-columns: 1fr; }
+      .phone { margin: auto; }
+      .metric-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">工</div>
+        <div>
+          <h1>机场贵宾厅权益平台</h1>
+          <small>概念方案与交互原型 V0.1</small>
+        </div>
+      </div>
+      <div class="top-meta">新加坡分行 · 讨论稿 · 2026-06-15</div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="side-label">方案导航</div>
+        <button class="nav-btn active" data-view="overview">方案总览</button>
+        <button class="nav-btn" data-view="flow">多方泳道流程</button>
+        <button class="nav-btn" data-view="customer">客户 APP 原型</button>
+        <button class="nav-btn" data-view="lounge">贵宾厅核销端</button>
+        <button class="nav-btn" data-view="bank">银行运营与对账</button>
+        <div class="side-note">
+          本原型用于确认大框架。有效期、发放门槛、首批名单、年度上限等均按“活动参数”处理，可在立项后由业务、财务、合规共同定稿。
+        </div>
+      </aside>
+
+      <main>
+        <section class="view active" id="overview">
+          <div class="page-heading">
+            <div>
+              <h2>从“人工登记”升级为统一权益账户</h2>
+              <p>以客户号为权益归集主键，以活动和来源为明细，以动态核销凭证完成使用和对账闭环。</p>
+            </div>
+            <span class="pill">建议方案：动态二维码核销</span>
+          </div>
+          <div class="overview-grid">
+            <div class="card hero-card">
+              <h3>建议的产品边界</h3>
+              <p>第一阶段不需要一次性建设复杂的第三方平台。可以先打通“银行权益账本 + 客户 APP 展示 + 贵宾厅轻量核销页 + 对账报表”，保留人工兜底，并让后续借记卡、私人银行和邀请制卡产品复用同一套权益服务。</p>
+              <div class="principles">
+                <div class="principle"><b>客户级归集</b><span>同一客户来自信用卡、借记卡、私行名单的权益统一展示，不因换卡丢失。</span></div>
+                <div class="principle"><b>权益批次化</b><span>每次发放记录来源、原因、数量、有效期、活动编号和成本归属。</span></div>
+                <div class="principle"><b>核销原子化</b><span>每次使用生成唯一核销流水，防止重复点击、重复扫码和跨厅重复使用。</span></div>
+                <div class="principle"><b>规则参数化</b><span>门槛、有效期、上限、名单和排序规则由活动配置，不写死在 APP。</span></div>
+              </div>
+              <div class="callout"><b>关键调整：</b>不建议继续采用“点击立即使用后12小时恢复按钮”的方式。应按实际权益余额控制，每次生成短时有效凭证，核销成功后立即扣减1次；未扫码则不扣减。</div>
+            </div>
+            <div class="card decision-card">
+              <h3>待决策参数（演示值）</h3>
+              <div class="decision-row">
+                <label><span>权益有效期</span><span>活动级</span></label>
+                <select><option>90个自然日</option><option>180个自然日</option><option>至活动结束后30日</option></select>
+              </div>
+              <div class="decision-row">
+                <label><span>发放门槛</span><span>可组合</span></label>
+                <select><option>累计消费满 SGD 10,000</option><option>指定名单直接赠送</option><option>开卡并完成首刷</option></select>
+              </div>
+              <div class="decision-row">
+                <label><span>客户年度上限</span><span>跨活动校验</span></label>
+                <input value="6 次">
+              </div>
+              <div class="decision-row">
+                <label><span>核销模式</span><span>推荐</span></label>
+                <select><option>动态二维码 + 6位备用码</option><option>静态二维码 + OTP</option><option>人工登记后银行补录</option></select>
+              </div>
+              <div class="decision-row">
+                <label><span>预算扣减时点</span><span>财务确认</span></label>
+                <select><option>实际核销时扣减</option><option>权益发放时预占，核销时确认</option></select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="flow">
+          <div class="page-heading">
+            <div>
+              <h2>多方端到端泳道流程</h2>
+              <p>覆盖活动创建、权益累计、客户查看、现场核销、异常处理和月度结算。</p>
+            </div>
+            <span class="pill">主流程 + 人工兜底</span>
+          </div>
+          <div class="flow-wrap">
+            <div class="flow-board">
+              <div class="lane bank">
+                <div class="lane-title">银行 / 权益平台</div>
+                <div class="flow-cell arrow"><div class="node config"><strong>1. 创建活动</strong>配置客群、门槛、有效期、预算、上限、名单</div></div>
+                <div class="flow-cell arrow"><div class="node config"><strong>2. 审批并生效</strong>业务、财务、合规双人复核</div></div>
+                <div class="flow-cell arrow"><div class="node system"><strong>3. 采集与判定</strong>汇总交易/名单/客户层级数据</div></div>
+                <div class="flow-cell arrow"><div class="node system"><strong>4. 发放入账</strong>生成权益批次和通知</div></div>
+                <div class="flow-cell arrow"><div class="node success"><strong>7. 接收核销</strong>校验凭证并原子扣减1次</div></div>
+                <div class="flow-cell arrow"><div class="node warn"><strong>9. 异常处理</strong>冲正、补发、撤销、退款回收</div></div>
+                <div class="flow-cell"><div class="node config"><strong>10. 结算归档</strong>账单匹配、差异处理、付款</div></div>
+              </div>
+              <div class="lane customer">
+                <div class="lane-title">客户</div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"><div class="node"><strong>产生资格</strong>消费达标 / 名单邀请 / 产品权益</div></div>
+                <div class="flow-cell arrow"><div class="node system"><strong>5. 查看权益</strong>总次数、来源、原因、到期日、使用说明</div></div>
+                <div class="flow-cell arrow"><div class="node system"><strong>6. 生成凭证</strong>身份验证后生成60秒动态二维码</div></div>
+                <div class="flow-cell"><div class="node success"><strong>8. 获得结果</strong>成功页、剩余次数、电子凭证</div></div>
+                <div class="flow-cell"></div>
+              </div>
+              <div class="lane lounge">
+                <div class="lane-title">贵宾厅</div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"><div class="node"><strong>接入准备</strong>维护厅点、终端、操作员和单价</div></div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell arrow"><div class="node system"><strong>扫码核验</strong>姓名缩写、卡尾号、航班/登机牌辅助核验</div></div>
+                <div class="flow-cell arrow"><div class="node success"><strong>确认准入</strong>返回核销流水号并记录服务</div></div>
+                <div class="flow-cell"><div class="node config"><strong>提交月结单</strong>核销流水、厅点、日期、单价、税费</div></div>
+              </div>
+              <div class="lane finance">
+                <div class="lane-title">财务 / 对账</div>
+                <div class="flow-cell"><div class="node config"><strong>预算建档</strong>金额、人次、成本中心</div></div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"><div class="node warn"><strong>预算预警</strong>发放预占或核销扣减</div></div>
+                <div class="flow-cell"></div>
+                <div class="flow-cell"><div class="node system"><strong>日常监控</strong>重复、超期、离线补录、异常终端</div></div>
+                <div class="flow-cell"><div class="node success"><strong>三方匹配</strong>银行流水 = 贵宾厅账单 = 权益账本</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="legend">
+            <span><i style="background:#fff0f1;border:1px solid #dca2a7"></i>人工配置/审批</span>
+            <span><i style="background:#f6faff;border:1px solid #9dbfe5"></i>系统自动处理</span>
+            <span><i style="background:#f3fbf8;border:1px solid #90cdb8"></i>成功状态</span>
+            <span><i style="background:#fffbf2;border:1px solid #dfbe78"></i>风险与异常</span>
+          </div>
+        </section>
+
+        <section class="view" id="customer">
+          <div class="page-heading">
+            <div>
+              <h2>客户 APP 原型</h2>
+              <p>入口建议放在“服务”或统一“我的权益”，信用卡页保留快捷入口，避免未来借记卡和私行权益割裂。</p>
+            </div>
+          </div>
+          <div class="phone-layout">
+            <div class="phone" id="customer-phone">
+              <div class="statusbar"><span>9:41</span><span>5G · 87%</span></div>
+              <div class="mobile-head"><span>‹</span><b id="mobile-title">机场贵宾厅权益</b><span>•••</span></div>
+              <div class="mobile-content" id="mobile-screen"></div>
+              <div class="mobile-tabs"><button>服务</button><button class="active">权益</button><button>我的</button></div>
+            </div>
+            <div class="card prototype-controls">
+              <h3>演示页面</h3>
+              <div class="screen-list">
+                <button class="screen-btn active" data-screen="home">权益首页</button>
+                <button class="screen-btn" data-screen="detail">权益详情</button>
+                <button class="screen-btn" data-screen="qr">动态核销码</button>
+                <button class="screen-btn" data-screen="success">核销成功</button>
+                <button class="screen-btn" data-screen="history">权益明细</button>
+                <button class="screen-btn" data-screen="empty">无可用权益</button>
+              </div>
+              <div class="annotation">
+                <h4>界面原则</h4>
+                <ul>
+                  <li>首页先展示总可用次数和最近到期权益，再展示来源卡片。</li>
+                  <li>每笔权益必须可解释：为什么获得、来自哪个产品/活动、何时到期。</li>
+                  <li>二维码只在客户主动使用并完成生物识别/登录态校验后生成。</li>
+                  <li>核销以服务端成功为准，APP点击本身不直接扣减权益。</li>
+                  <li>历史页同时展示发放、使用、过期、撤销和补发流水。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="lounge">
+          <div class="page-heading">
+            <div>
+              <h2>贵宾厅轻量核销端</h2>
+              <p>可先部署为受控网页/PWA，使用银行分配的操作员账号，不要求贵宾厅安装复杂系统。</p>
+            </div>
+          </div>
+          <div class="verify-layout">
+            <div class="card scanner">
+              <b>SATS Lounge · T3</b>
+              <div class="scan-window"><div class="scan-line"></div>将客户动态二维码置于框内</div>
+              <div class="scan-actions"><button>输入6位码</button><button>离线登记</button></div>
+            </div>
+            <div class="card verification">
+              <span class="pill">凭证有效 · 剩余 43 秒</span>
+              <h3>客户与权益核验</h3>
+              <div class="customer-id">
+                <div class="avatar">CL</div>
+                <div><b>CAI L***</b><p style="margin:5px 0;color:#687180;font-size:13px">客户号 98****21 · 卡尾号 8446</p></div>
+              </div>
+              <div class="detail-box" style="margin-top:14px">
+                <div class="kv"><span>权益产品</span><b>机场贵宾厅单次权益</b></div>
+                <div class="kv"><span>可用次数</span><b>3 次</b></div>
+                <div class="kv"><span>本次使用</span><b>1 次</b></div>
+                <div class="kv"><span>最近到期日</span><b>2026-09-30</b></div>
+                <div class="kv"><span>适用厅点</span><b>SATS T1 / T2 / T3</b></div>
+              </div>
+              <div class="field" style="margin:14px 0"><label>航班号（可选或按合同要求）</label><input value="SQ 322"></div>
+              <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:12px 0 18px"><input type="checkbox" checked> 已核对客户姓名缩写及当日登机牌</label>
+              <button class="primary-btn" id="verify-button">确认核销并准入</button>
+              <div id="verify-result" class="callout" style="display:none;border-color:#16845b;background:#edf9f4;color:#126349"><b>核销成功</b><br>流水号 SG-LNG-20260615-00872，客户剩余2次。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="bank">
+          <div class="page-heading">
+            <div>
+              <h2>银行运营、客服与财务视图</h2>
+              <p>活动配置与权益流水分离：活动决定“如何获得”，权益账本记录“客户实际拥有什么”。</p>
+            </div>
+          </div>
+          <div class="metric-row">
+            <div class="metric"><span>年度预算</span><b>SGD 30,000</b></div>
+            <div class="metric"><span>已核销金额</span><b>SGD 8,164.80</b></div>
+            <div class="metric"><span>可用权益余额</span><b>428 次</b></div>
+            <div class="metric"><span>待处理差异</span><b style="color:#b56a00">7 笔</b></div>
+          </div>
+          <div class="portal-grid">
+            <div class="card portal-card">
+              <h3>活动规则配置</h3>
+              <div class="form-grid">
+                <div class="field"><label>客群来源</label><select><option>信用卡 + 借记卡 + 私行名单</option></select></div>
+                <div class="field"><label>归集维度</label><select><option>客户号</option><option>账户</option><option>卡片</option></select></div>
+                <div class="field"><label>资格类型</label><select><option>消费达标</option><option>名单直发</option><option>开卡首刷</option></select></div>
+                <div class="field"><label>采集周期</label><select><option>自然月</option><option>季度</option><option>活动周期</option></select></div>
+                <div class="field"><label>达标金额</label><input value="SGD 10,000"></div>
+                <div class="field"><label>达标发放次数</label><input value="1"></div>
+                <div class="field"><label>有效期</label><input value="90 自然日"></div>
+                <div class="field"><label>年度客户上限</label><input value="6"></div>
+                <div class="field"><label>预算金额</label><input value="SGD 30,000"></div>
+                <div class="field"><label>权益单价</label><input value="SGD 64.80"></div>
+              </div>
+              <button class="primary-btn" style="margin-top:16px">保存草稿并提交审批</button>
+            </div>
+            <div class="card portal-card">
+              <h3>异常与人工处理</h3>
+              <table class="table">
+                <thead><tr><th>类型</th><th>规则</th><th>权限</th></tr></thead>
+                <tbody>
+                  <tr><td>退款</td><td>未使用权益自动回收；已使用转人工复核</td><td>系统/运营</td></tr>
+                  <tr><td>重复核销</td><td>同一凭证仅允许成功一次</td><td>系统拒绝</td></tr>
+                  <tr><td>离线准入</td><td>记录证明，次日补录并进入差异队列</td><td>贵宾厅主管</td></tr>
+                  <tr><td>客户投诉</td><td>补发/撤销需双人审批并留痕</td><td>客服+运营</td></tr>
+                </tbody>
+              </table>
+              <div class="callout">所有手工补发、冲销和有效期调整都必须生成不可修改的操作日志，记录操作人、原因、审批人、前后值和关联凭证。</div>
+            </div>
+          </div>
+          <div class="card portal-card" style="margin-top:18px">
+            <h3>月度对账示例</h3>
+            <table class="table">
+              <thead><tr><th>核销流水</th><th>厅点</th><th>日期</th><th>银行账本</th><th>贵宾厅账单</th><th>差异原因</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>...00872</td><td>SATS T3</td><td>2026-06-15</td><td>SGD 64.80</td><td>SGD 64.80</td><td>-</td><td><span class="status ok">匹配</span></td></tr>
+                <tr><td>...00741</td><td>SATS T1</td><td>2026-06-12</td><td>SGD 64.80</td><td>SGD 129.60</td><td>合作方疑似重复计费</td><td><span class="status bad">差异</span></td></tr>
+                <tr><td>OFF-0031</td><td>SATS T2</td><td>2026-06-10</td><td>-</td><td>SGD 64.80</td><td>离线登记待补录</td><td><span class="status pending">待核实</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const screens = {
+      home: `
+        <div class="summary-card">
+          <div class="summary-top"><span>我的机场贵宾厅权益</span><small>统一权益账户</small></div>
+          <h3>3 次可用</h3><p>最近1次将于 2026-07-28 到期</p>
+          <div class="counter"><div><b>5</b><span>累计获得</span></div><div><b>2</b><span>累计使用</span></div><div><b>3</b><span>当前可用</span></div></div>
+        </div>
+        <div class="mobile-section-title">即将到期</div>
+        <div class="benefit-card" data-open="detail">
+          <div class="benefit-row"><div><h4>消费达标赠送</h4><p>来源：万事达世界卡 · 尾号8446<br>有效期至 2026-07-28</p></div><div class="count-badge">1</div></div>
+          <div class="progress"><i></i></div>
+        </div>
+        <div class="mobile-section-title">其他可用权益</div>
+        <div class="benefit-card"><div class="benefit-row"><div><h4>私人银行客户礼遇</h4><p>来源：私行客户名单<br>有效期至 2026-09-30</p></div><div class="count-badge">2</div></div></div>
+        <div class="benefit-card"><div class="benefit-row"><div><h4>中企协卡邀请制权益</h4><p>特殊权益 · 不限次<br>需同时出示有效卡片及登机牌</p></div><div class="count-badge">∞</div></div></div>`,
+      detail: `
+        <div class="detail-header"><div class="big-count">1</div><b>次可用权益</b><p>消费达标赠送 · 最近到期批次</p></div>
+        <div class="detail-box">
+          <div class="kv"><span>获得原因</span><b>活动期消费满 SGD 10,000</b></div>
+          <div class="kv"><span>来源产品</span><b>万事达世界卡 · 8446</b></div>
+          <div class="kv"><span>发放日期</span><b>2026-04-30</b></div>
+          <div class="kv"><span>有效期至</span><b style="color:#c61f2b">2026-07-28</b></div>
+          <div class="kv"><span>适用贵宾厅</span><b>SATS T1 / T2 / T3</b></div>
+        </div>
+        <div class="detail-box"><b style="font-size:13px">使用方法</b><p style="font-size:12px;color:#687180;line-height:1.7">到达贵宾厅后点击“立即使用”，完成身份验证并向前台出示动态二维码。请同时准备当日登机牌。</p></div>
+        <button class="primary-btn" data-open="qr">立即使用</button>`,
+      qr: `
+        <div class="qr-box">
+          <b>请向贵宾厅前台出示</b>
+          <div class="qr"></div>
+          <div class="timer">动态码 00:43 后刷新</div>
+          <p style="color:#687180;font-size:11px;line-height:1.6">凭证仅限本人本次使用。截图无效，核销成功前不会扣减权益。</p>
+          <div class="detail-box" style="text-align:left;margin-top:14px"><div class="kv"><span>客户</span><b>CAI L***</b></div><div class="kv"><span>卡尾号</span><b>8446</b></div><div class="kv"><span>本次使用</span><b>1次</b></div></div>
+        </div>`,
+      success: `
+        <div class="success-icon">✓</div>
+        <div style="text-align:center"><h3>权益核销成功</h3><p style="color:#687180;font-size:12px">SATS Lounge T3 · 2026-06-15 17:39</p></div>
+        <div class="detail-box" style="margin-top:24px"><div class="kv"><span>本次使用</span><b>1次</b></div><div class="kv"><span>剩余权益</span><b>2次</b></div><div class="kv"><span>核销流水</span><b>...00872</b></div></div>
+        <button class="primary-btn" data-open="history">查看权益明细</button>`,
+      history: `
+        <div class="mobile-section-title" style="margin-top:0">权益流水</div>
+        <div class="detail-box">
+          <div class="history-item"><div><b>SATS T3 核销</b><br><small>2026-06-15 · 流水...00872</small></div><b class="negative">-1次</b></div>
+          <div class="history-item"><div><b>消费达标权益发放</b><br><small>2026-04-30 · 活动 SG-LNG-0426</small></div><b class="positive">+1次</b></div>
+          <div class="history-item"><div><b>私行客户礼遇发放</b><br><small>2026-03-01 · 名单批次 PB-0301</small></div><b class="positive">+2次</b></div>
+          <div class="history-item"><div><b>SATS T1 核销</b><br><small>2026-02-18 · 流水...00319</small></div><b class="negative">-1次</b></div>
+        </div>`,
+      empty: `
+        <div style="text-align:center;padding:70px 20px 20px"><div style="font-size:52px;color:#b7bec7">○</div><h3>暂无可用权益</h3><p style="color:#687180;font-size:12px;line-height:1.7">您可在此查看后续获得的机场贵宾厅权益。达标进度和活动规则将在权益入账前单独展示。</p></div>
+        <div class="detail-box"><b style="font-size:13px">进行中的活动</b><p style="font-size:12px;color:#687180">万事达世界卡境外消费活动</p><div class="progress"><i style="width:72%"></i></div><p style="font-size:11px;color:#687180">已累计 SGD 7,200 / SGD 10,000</p></div>`
+    };
+
+    function showView(id) {
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === id));
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === id));
+    }
+    document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
+
+    function showScreen(name) {
+      document.getElementById("mobile-screen").innerHTML = screens[name];
+      document.getElementById("mobile-title").textContent = name === "history" ? "权益明细" : name === "qr" ? "出示核销码" : "机场贵宾厅权益";
+      document.querySelectorAll(".screen-btn").forEach(b => b.classList.toggle("active", b.dataset.screen === name));
+      document.querySelectorAll("[data-open]").forEach(el => el.addEventListener("click", () => showScreen(el.dataset.open)));
+    }
+    document.querySelectorAll(".screen-btn").forEach(b => b.addEventListener("click", () => showScreen(b.dataset.screen)));
+    document.getElementById("verify-button").addEventListener("click", () => {
+      document.getElementById("verify-result").style.display = "block";
+      document.getElementById("verify-button").disabled = true;
+      document.getElementById("verify-button").textContent = "已核销";
+      document.getElementById("verify-button").style.background = "#7d8792";
+    });
+    showScreen("home");
+  </script>
+</body>
+</html>
